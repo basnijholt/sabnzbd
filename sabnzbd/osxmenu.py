@@ -769,12 +769,3 @@ class SABnzbdDelegate(NSObject):
         sys.stderr.flush()
         sys.stdout.flush()
         return NSTerminateNow
-
-
-def notify(notificationName, message):
-    """ Send a notification to the OS (OSX-only) """
-    if sabnzbd.FOUNDATION:
-        pool = Foundation.NSAutoreleasePool.alloc().init()
-        nc = Foundation.NSDistributedNotificationCenter.defaultCenter()
-        nc.postNotificationName_object_(notificationName, message)
-        del pool

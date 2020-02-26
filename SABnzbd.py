@@ -890,13 +890,10 @@ def main():
     sabnzbd.DIR_LANGUAGE = real_path(sabnzbd.DIR_PROG, DEF_LANGUAGE)
     org_dir = os.getcwd()
 
-    if getattr(sys, 'frozen', None) == 'macosx_app':
-        # Correct path if frozen with py2app (OSX)
-        sabnzbd.MY_FULLNAME = sabnzbd.MY_FULLNAME.replace("/Resources/SABnzbd.py", "/MacOS/SABnzbd")
-
     # Need console logging for SABnzbd.py and SABnzbd-console.exe
     console_logging = (not hasattr(sys, "frozen")) or (sabnzbd.MY_NAME.lower().find('-console') > 0)
     console_logging = console_logging and not sabnzbd.DAEMON
+    console_logging = True
 
     LOGLEVELS = (logging.FATAL, logging.WARNING, logging.INFO, logging.DEBUG)
 
@@ -1169,7 +1166,7 @@ def main():
     if autobrowser is not None:
         sabnzbd.cfg.autobrowser.set(autobrowser)
 
-    if not sabnzbd.WIN_SERVICE and not getattr(sys, 'frozen', None) == 'macosx_app':
+    if not getattr(sys, 'frozen'):
         signal.signal(signal.SIGINT, sabnzbd.sig_handler)
         signal.signal(signal.SIGTERM, sabnzbd.sig_handler)
 
@@ -1381,9 +1378,6 @@ def main():
 
     if not autorestarted:
         launch_a_browser(browser_url)
-        if sabnzbd.FOUNDATION:
-            import sabnzbd.osxmenu
-            sabnzbd.osxmenu.notify("SAB_Launched", None)
         notifier.send_notification('SABnzbd', T('SABnzbd %s started') % sabnzbd.__version__, 'startup')
         # Now's the time to check for a new version
         check_latest_version()
@@ -1463,7 +1457,7 @@ def main():
 
             os.chdir(org_dir)
             # If OSX frozen restart of app instead of embedded python
-            if getattr(sys, 'frozen', None) == 'macosx_app':
+            if getattr(sys, 'frozen') and sabnzbd.DARWIN:
                 # [[NSProcessInfo processInfo] processIdentifier]]
                 # logging.info("%s" % (NSProcessInfo.processInfo().processIdentifier()))
                 my_pid = os.getpid()
@@ -1490,13 +1484,11 @@ def main():
         mail.send('stop')
     if sabnzbd.WIN32:
         del_connection_info()
-    if sabnzbd.FOUNDATION:
-        sabnzbd.osxmenu.notify("SAB_Shutdown", None)
     logging.info('Leaving SABnzbd')
     sys.stderr.flush()
     sys.stdout.flush()
     sabnzbd.pid_file()
-    if getattr(sys, 'frozen', None) == 'macosx_app':
+    if getattr(sys, 'frozen') and sabnzbd.DARWIN:
         try:
             AppHelper.stopEventLoop()
         except:
@@ -1638,8 +1630,8 @@ if __name__ == '__main__':
         if not HandleCommandLine(allow_service=not hasattr(sys, "frozen")):
             main()
 
-    elif getattr(sys, 'frozen', None) == 'macosx_app':
-        try:
+    elif sabnzbd.DARWIN :
+        #try:
             # OSX binary runner
             from threading import Thread
             from PyObjCTools import AppHelper
@@ -1664,7 +1656,7 @@ if __name__ == '__main__':
             sabApp = startApp()
             sabApp.start()
             AppHelper.runEventLoop()
-        except:
-            main()
+        #except:
+        #    main()
     else:
         main()
